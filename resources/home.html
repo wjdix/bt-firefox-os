@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <script src="js/braintree-1.1.1.min.js"></script>
+    <script src="js/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript">
+      $(function(){
+        var cse_key = $("#cse-key").val();
+        var braintree = Braintree.create(cse_key);
+        $("form#transaction-form").submit(function(){
+          $("input#cc-num").val(braintree.encrypt($("input.unencrypted-cc-number").val()));
+          $("input#exp-date").val(braintree.encrypt($("input.unencrypted-exp-date").val()));
+          $("input#cvv").val(braintree.encrypt($("input.unencrypted-cvv").val()));
+          return true;
+        });
+        if(!(navigator.mozApps == undefined)){
+          var request = navigator.mozApps.getSelf();
+          request.onsuccess = function() {
+            if (request.result) {
+              $("a#install-button").remove();
+            }
+          };
+          $("a#install-button").click(function(){
+            var request = navigator.mozApps.install("http://localhost:9393/manifest");
+            request.onsuccess = function() {
+              $("a#install-button").remove();
+            };
+            request.onerror = function() {
+              alert("NO FAILURE");
+            };
+          });
+        }
+        window.addEventListener("offline", function(e){
+          alert("offline");
+          $("#transaction-form").hide();
+          $("#offline-warning").text("Sorry you can only accept payments while online.");
+        });
+        window.addEventListener("online", function(e){
+          alert("online");
+          $("#transaction-form").show();
+          $("#offline-warning").text("");
+        });
+      })
+    </script>
+    <title>Braintree FirefoxOS Example</title>
+  </head>
+  <body>
+    <div id="offline-warning"></div>
+    <a id="install-button" href="#">I love taking donations, I wanna do it on my phone.</a>
+    <input type="hidden" id="cse-key" />
+    <ul class='errors'>
+      <li class='error'></li>
+    </ul>
+    <form id="transaction-form" method="POST" action="/">
+      <label for="phone-num">Donater Phone Number</label>
+      <input type="text" name="phone-num">
+      <br/>
+      <label for="amount">Donation Amount:</label>
+      <input type="text" name="amount"/>
+      <br/>
+      <label for="cc-num"> Credit Card Number:</label>
+      <input type="text" name="" class="unencrypted-cc-number"/>
+      <input type="hidden" name="cc-num" id="cc-num"/>
+      <br/>
+      <label for="exp-date"> Expiration Date:</label>
+      <input type="text" name="" class="unencrypted-exp-date"/>
+      <input type="hidden" name="exp-date" id="exp-date"/>
+      <br/>
+      <label for="cvv"> CVV </label>
+      <input type="text" name="" class="unencrypted-cvv"/>
+      <input type="hidden" name="cvv" id="cvv"/>
+      <br/>
+      <input type="Submit" value="Take Donation"/>
+    </form>
+  </body>
+</html>
